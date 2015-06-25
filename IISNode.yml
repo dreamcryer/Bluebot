@@ -1,3 +1,2 @@
 loggingEnabled: true
 devErrorsEnabled: true
-interceptor: "--debug &quot;%ProgramFiles(x86)%\iisnode\interceptor.js&quot;"
