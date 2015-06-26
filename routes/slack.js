@@ -43,7 +43,7 @@ router.post('/cmd', function (req, res) {
                 );
                 break;
             case Command.Predict:
-                if (cmdTokens.length > 2) {
+                if (cmdTokens.length > 1) {
                     var fileName = cmdTokens[1];
                     var blob = azure.createBlobService(storageAccount, storageKey);
                     var blobLines = '';
