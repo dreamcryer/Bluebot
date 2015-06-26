@@ -1,5 +1,5 @@
 ﻿var request = require('request');
-var azure = require('azure');
+var azure = require('azure-storage');
 var log = require('log');
 var express = require('express');
 var router = express.Router();
@@ -45,8 +45,8 @@ router.post('/cmd', function (req, res) {
                 break;
             case Command.Predict:
                 logger.debug("Predict command.");
-                if (cmdTokens.length > 1) {
-                    var fileName = cmdTokens[1];
+                if (true) {
+                    var fileName = 'WA104238072UsageBad.txt';
                     var blob = azure.createBlobService(storageAccount, storageKey);
                     var blobLines = '';
                     var values = [];
@@ -85,7 +85,7 @@ router.post('/cmd', function (req, res) {
                             'accept': 'application/json'
                         };
                         
-                        logger.log("making request to predict");
+                        logger.debug("making request to predict");
                         request({
                             uri: anomalyUrl,
                             method: 'POST',
@@ -96,7 +96,7 @@ router.post('/cmd', function (req, res) {
                             headers: headers
                         }, function (error, response, body) {
                             logger.debug('Predict request callback');
-                            logger.debut(JSON.stringify(response));
+                            logger.debug(JSON.stringify(response));
                             if (!error) {
                                 var result = (JSON.parse(body)).Results;
                                 var resultValues = result.Output.value.Values;
