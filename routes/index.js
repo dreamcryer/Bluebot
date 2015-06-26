@@ -17,24 +17,24 @@ var slackIncomingWebhook = 'https://hooks.slack.com/services/T06Q6QF08/B06T073DL
 
 /* GET home page. */
 router.get('/', function (req, res) {
-    var anomalies = [["27e3d0ce-b415-92b8-7ee7-d079dde09568", "65", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.861775159835815"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "100", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.813113272190094"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "200", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.741334140300751"]];
-    var formatted = formatAnomaliesForSlack(anomalies);
-    var message = {
-        'attachments': formatted.attachments
-    }
+    //var anomalies = [["27e3d0ce-b415-92b8-7ee7-d079dde09568", "65", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.861775159835815"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "100", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.813113272190094"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "200", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.741334140300751"]];
+    //var formatted = formatAnomaliesForSlack(anomalies);
+    //var message = {
+    //    'attachments': formatted.attachments
+    //}
     
-    request({
-        uri: slackIncomingWebhook,
-        mehotd: 'POST',
-        timeout: 10000,
-        followRedirect: true,
-        maxRedirects: 10,
-        body: JSON.stringify(message) //message
-    }, function (error, response, body) {
-        logger.debug('Salck incoming webhook callback');
-        logger.debug(JSON.stringify(response));
-        res.send(JSON.stringify(message));
-    });
+    //request({
+    //    uri: slackIncomingWebhook,
+    //    mehotd: 'POST',
+    //    timeout: 10000,
+    //    followRedirect: true,
+    //    maxRedirects: 10,
+    //    body: JSON.stringify(message) //message
+    //}, function (error, response, body) {
+    //    logger.debug('Salck incoming webhook callback');
+    //    logger.debug(JSON.stringify(response));
+    //    res.send(JSON.stringify(message));
+    //});
 
     
     //logger.debug("Predict command.");
@@ -143,44 +143,44 @@ router.get('/', function (req, res) {
     //    res.render('index', { title: 'Express' });
     //});
 
-    //res.render('index', { title: 'Bluebot' });
+    res.render('index', { title: 'Bluebot' });
 });
 
-function formatAnomaliesForSlack(anomalies) {
-    var formatted = { 'attachments': [] };
-    var anomalyAttachment = {
-        'fallback': JSON.stringify(anomalies),
-        'text': 'Bluebot found the following anomalies.',
-        'title': 'API Usage Anomaly',
-        'fields': []
-    }
+//function formatAnomaliesForSlack(anomalies) {
+//    var formatted = { 'attachments': [] };
+//    var anomalyAttachment = {
+//        'fallback': JSON.stringify(anomalies),
+//        'text': 'Bluebot found the following anomalies.',
+//        'title': 'API Usage Anomaly',
+//        'fields': []
+//    }
     
-    for (var i in anomalies) {
-        anomalyAttachment.fields.push({
-            'title': anomalies[i][0],
-            'value': anomalies[i][3] + '\n' + anomalies[i][4],
-            'short': false
-        });
-        anomalyAttachment.fields.push({
-            'title': 'API ID',
-            'value': anomalies[i][1],
-            'short': true
-        });
-        anomalyAttachment.fields.push({
-            'title': 'Host',
-            'value': anomalies[i][5],
-            'short': true
-        });
-        anomalyAttachment.fields.push({
-            'title': 'Scored Probability',
-            'value': anomalies[i][8],
-            'short': true
-        });
-    }
+//    for (var i in anomalies) {
+//        anomalyAttachment.fields.push({
+//            'title': anomalies[i][0],
+//            'value': anomalies[i][3] + '\n' + anomalies[i][4],
+//            'short': false
+//        });
+//        anomalyAttachment.fields.push({
+//            'title': 'API ID',
+//            'value': anomalies[i][1],
+//            'short': true
+//        });
+//        anomalyAttachment.fields.push({
+//            'title': 'Host',
+//            'value': anomalies[i][5],
+//            'short': true
+//        });
+//        anomalyAttachment.fields.push({
+//            'title': 'Scored Probability',
+//            'value': anomalies[i][8],
+//            'short': true
+//        });
+//    }
     
-    formatted.attachments.push(anomalyAttachment);
+//    formatted.attachments.push(anomalyAttachment);
     
-    return formatted;
-}
+//    return formatted;
+//}
 
 module.exports = router;
