@@ -17,79 +17,83 @@ var anomalyThreshold = 0.7;
 
 /* GET home page. */
 router.get('/', function (req, res) {
-    logger.debug("Predict command.");
-    if (true) {
-        var fileName = 'WA104238072UsageBad.txt';
-        var blob = azure.createBlobService(storageAccount, storageKey);
-        var blobLines = '';
-        var values = [];
+    var anomalies = [["27e3d0ce-b415-92b8-7ee7-d079dde09568", "65", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.861775159835815"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "100", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.813113272190094"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "200", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.741334140300751"]];
+    var formatted = formatAnomaliesForSlack(anomalies);
+    var message = JSON.stringify(formatted);
+    res.send(message);
+    //logger.debug("Predict command.");
+    //if (true) {
+    //    var fileName = 'WA104238072UsageBad.txt';
+    //    var blob = azure.createBlobService(storageAccount, storageKey);
+    //    var blobLines = '';
+    //    var values = [];
         
-        logger.debug("Getting blob text");
-        blob.getBlobToText(storageContainer, fileName, function (error, result, response) {
-            blobLines = result.split('\r\n');
-            blobLines.splice(0, 1);
+    //    logger.debug("Getting blob text");
+    //    blob.getBlobToText(storageContainer, fileName, function (error, result, response) {
+    //        blobLines = result.split('\r\n');
+    //        blobLines.splice(0, 1);
             
-            for (var i in blobLines) {
-                var fields = blobLines[i].split('\t');
-                values.push(fields);
-            }
+    //        for (var i in blobLines) {
+    //            var fields = blobLines[i].split('\t');
+    //            values.push(fields);
+    //        }
             
-            var requestBody = {
-                "Inputs": {
-                    "NewData": {
-                        "ColumnNames": [
-                            "SessionId",
-                            "ApiId",
-                            "APIType",
-                            "AssetId",
-                            "AppURL",
-                            "Host",
-                            "Label"
-                        ],
-                        "Values": values
-                    }
-                },
-                "GlobalParameters": {}
-            }
+    //        var requestBody = {
+    //            "Inputs": {
+    //                "NewData": {
+    //                    "ColumnNames": [
+    //                        "SessionId",
+    //                        "ApiId",
+    //                        "APIType",
+    //                        "AssetId",
+    //                        "AppURL",
+    //                        "Host",
+    //                        "Label"
+    //                    ],
+    //                    "Values": values
+    //                }
+    //            },
+    //            "GlobalParameters": {}
+    //        }
             
-            var headers = {
-                'content-type': 'application/json',
-                'authorization': 'Bearer ' + anomalyMlKey,
-                'accept': 'application/json'
-            };
+    //        var headers = {
+    //            'content-type': 'application/json',
+    //            'authorization': 'Bearer ' + anomalyMlKey,
+    //            'accept': 'application/json'
+    //        };
             
-            logger.debug("making request to predict");
-            request({
-                uri: anomalyUrl,
-                method: 'POST',
-                timeout: 10000,
-                followRedirect: true,
-                maxRedirects: 10,
-                body: JSON.stringify(requestBody),
-                headers: headers
-            }, function (error, response, body) {
-                logger.debug('Predict request callback');
-                logger.debug(JSON.stringify(response));
-                if (!error) {
-                    var result = (JSON.parse(body)).Results;
-                    var resultValues = result.Output.value.Values;
-                    var anomalies = [];
+    //        logger.debug("making request to predict");
+    //        request({
+    //            uri: anomalyUrl,
+    //            method: 'POST',
+    //            timeout: 10000,
+    //            followRedirect: true,
+    //            maxRedirects: 10,
+    //            body: JSON.stringify(requestBody),
+    //            headers: headers
+    //        }, function (error, response, body) {
+    //            logger.debug('Predict request callback');
+    //            logger.debug(JSON.stringify(response));
+    //            if (!error) {
+    //                var result = (JSON.parse(body)).Results;
+    //                var resultValues = result.Output.value.Values;
+    //                var anomalies = [];
                     
-                    for (var i in resultValues) {
-                        if (resultValues[i][8] > anomalyThreshold) {
-                            anomalies.push(resultValues[i]);
-                        }
-                    }
+    //                for (var i in resultValues) {
+    //                    if (resultValues[i][8] > anomalyThreshold) {
+    //                        anomalies.push(resultValues[i]);
+    //                    }
+    //                }
                     
-                    var message = 'Here are some suspecious activities:\r\n' + JSON.stringify(anomalies);
-                    res.send(message);
-                }
-            });
-        });
-    }
-    else {
-        res.send('Usage: /bluebot predict {blobname}');
-    }
+    //                var message = 'Here are some suspecious activities:\r\n' + JSON.stringify(anomalies);
+    //                res.send(message);
+    //            }
+    //        });
+    //    });
+    //}
+    //else {
+    //    res.send('Usage: /bluebot predict {blobname}');
+    //}
 
     //var inputFile = 'WA104238072UsageBad.txt';
     //var requestBody = {
@@ -123,7 +127,47 @@ router.get('/', function (req, res) {
     //    res.render('index', { title: 'Express' });
     //});
 
-    //res.render('index', { title: 'Express' });
+    //res.render('index', { title: 'Bluebot' });
 });
+
+function formatAnomaliesForSlack(anomalies) {
+    var formatted = { 'attachments': [] };
+    var anomalyAttachment = {
+        'fallback': JSON.stringify(anomalies),
+        'pretext': 'Bluebot found the following anomalies.',
+        'author_name': 'Bluebot',
+        'title': 'API Usage Anomaly',
+        'fields': []
+    }
+    
+    for (var i in anomalies) {
+        anomalyAttachment.fields = [
+            {
+                'title': anomalies[i][0],
+                'value': anomalies[i][3] + '\n' + anomalies[i][4],
+                'short': false
+            },
+            {
+                'title': 'API ID',
+                'value': anomalies[i][1],
+                'short': true
+            },
+            {
+                'title': 'Host',
+                'value': anomalies[i][5],
+                'short': true
+            },
+            {
+                'title': 'Scored Probability',
+                'value': anomalies[i][8],
+                'short': true
+            }
+        ]
+    }
+    
+    formatted.attachments = anomalyAttachment;
+    
+    return formatted;
+}
 
 module.exports = router;

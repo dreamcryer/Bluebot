@@ -109,7 +109,8 @@ router.post('/cmd', function (req, res) {
                                     }
                                 }
                                 
-                                var message = 'Here are some suspecious activities:\r\n' + JSON.stringify(anomalies);
+                                var formatted = formatAnomaliesForSlack(anomalies);
+                                var message = JSON.stringify(formatted);
                                 res.send(message);
                             }
                         });
@@ -123,10 +124,52 @@ router.post('/cmd', function (req, res) {
                 res.send('Report last run:');
                 break;
             default:
-                res.send('Hi, ' + req.body.user_name + ' from ' + '#' + req.body.channel_name + ' on ' + req.body.team_domain);
+                var message = 'Hi, @' + req.body.user_name + ' from ' + '#' + req.body.channel_name + ' on ' + req.body.team_domain;
+                var resBody = { 'text': message };
+                res.send(JSON.stringify(resBody));
                 break;
         }
     }
 });
+
+function formatAnomaliesForSlack(anomalies) {
+    var formatted = { 'attachments': [] };
+    var anomalyAttachment = {
+        'fallback': JSON.stringify(anomalies),
+        'pretext': 'Bluebot found the following anomalies.',
+        'author_name': 'Bluebot',
+        'title': 'API Usage Anomaly',
+        'fields': []
+    }
+
+    for (var i in anomalies) {
+        anomalyAttachment.fields = [
+            {
+                'title': anomalies[i][0],
+                'value': anomalies[i][3] + '\n' + anomalies[i][4],
+                'short': false
+            },
+            {
+                'title': 'API ID',
+                'value': anomalies[i][1],
+                'short': true
+            },
+            {
+                'title': 'Host',
+                'value': anomalies[i][5],
+                'short': true
+            },
+            {
+                'title': 'Scored Probability',
+                'value': anomalies[i][8],
+                'short': true
+            }
+        ]
+    }
+
+    formatted.attachments = anomalyAttachment;
+    
+    return formatted;
+}
 
 module.exports = router;
