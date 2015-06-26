@@ -85,6 +85,7 @@ router.post('/cmd', function (req, res) {
                             'accept': 'application/json'
                         };
                         
+                        logger.log("making request to predict");
                         request({
                             uri: anomalyUrl,
                             method: 'POST',
@@ -94,9 +95,9 @@ router.post('/cmd', function (req, res) {
                             body: JSON.stringify(requestBody),
                             headers: headers
                         }, function (error, response, body) {
+                            logger.debug('Predict request callback');
+                            logger.debut(JSON.stringify(response));
                             if (!error) {
-                                logger.debug(body);
-                                
                                 var result = (JSON.parse(body)).Results;
                                 var resultValues = result.Output.value.Values;
                                 var anomalies = [];
