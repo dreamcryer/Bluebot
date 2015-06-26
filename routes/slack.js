@@ -46,7 +46,8 @@ router.post('/cmd', function (req, res) {
             case Command.Predict:
                 logger.debug("Predict command.");
                 if (true) {
-                    var fileName = 'WA104238072UsageBad.txt';
+                    logger.debug('Predict ' + cmdTokens[1]);
+                    var fileName = cmdTokens[1];
                     var blob = azure.createBlobService(storageAccount, storageKey);
                     var blobLines = '';
                     var values = [];
