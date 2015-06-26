@@ -1,4 +1,5 @@
-﻿var azure = require('azure');
+﻿var request = require('request');
+var azure = require('azure');
 var log = require('log');
 var express = require('express');
 var router = express.Router();
@@ -43,12 +44,14 @@ router.post('/cmd', function (req, res) {
                 );
                 break;
             case Command.Predict:
+                logger.debug("Predict command.");
                 if (cmdTokens.length > 1) {
                     var fileName = cmdTokens[1];
                     var blob = azure.createBlobService(storageAccount, storageKey);
                     var blobLines = '';
                     var values = [];
                     
+                    logger.debug("Getting blob text");
                     blob.getBlobToText(storageContainer, fileName, function (error, result, response) {
                         blobLines = result.split('\r\n');
                         blobLines.splice(0, 1);
