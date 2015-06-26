@@ -13,14 +13,30 @@ var anomalyBatchUrl = 'https://ussouthcentral.services.azureml.net/workspaces/db
 var anomalyUrl = 'https://ussouthcentral.services.azureml.net/workspaces/db9e31e5c7dd4f4ea1ce5c16b4425036/services/3b6ba3fb5c88414a95986794752b0746/execute?api-version=2.0';
 var anomalyMlKey = 'ZeehYZTf4Kxu/1YhDjm4aTjOYGzow9K2Q//6UehrpNqhSUiRQXFNLgurn2L0kgsElCCkYFPUoLuORyTUUJ19GA==';
 var anomalyThreshold = 0.7;
-
+var slackIncomingWebhook = 'https://hooks.slack.com/services/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';
 
 /* GET home page. */
 router.get('/', function (req, res) {
     var anomalies = [["27e3d0ce-b415-92b8-7ee7-d079dde09568", "65", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.861775159835815"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "100", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.813113272190094"], ["27e3d0ce-b415-92b8-7ee7-d079dde09568", "200", "method", "WA104238072", "http://osf-agave/rtm/dasau/PowerPointTutorialEdog/PowerPointInteractiveTutorial.html", "8192", "2", "1", "0.741334140300751"]];
     var formatted = formatAnomaliesForSlack(anomalies);
-    var message = JSON.stringify(formatted);
-    res.send(message);
+    var message = {
+        'attachments': formatted.attachments
+    }
+    
+    request({
+        uri: slackIncomingWebhook,
+        mehotd: 'POST',
+        timeout: 10000,
+        followRedirect: true,
+        maxRedirects: 10,
+        body: JSON.stringify(message) //message
+    }, function (error, response, body) {
+        logger.debug('Salck incoming webhook callback');
+        logger.debug(JSON.stringify(response));
+        res.send(JSON.stringify(message));
+    });
+
+    
     //logger.debug("Predict command.");
     //if (true) {
     //    var fileName = 'WA104238072UsageBad.txt';
@@ -134,38 +150,35 @@ function formatAnomaliesForSlack(anomalies) {
     var formatted = { 'attachments': [] };
     var anomalyAttachment = {
         'fallback': JSON.stringify(anomalies),
-        'pretext': 'Bluebot found the following anomalies.',
-        'author_name': 'Bluebot',
+        'text': 'Bluebot found the following anomalies.',
         'title': 'API Usage Anomaly',
         'fields': []
     }
     
     for (var i in anomalies) {
-        anomalyAttachment.fields = [
-            {
-                'title': anomalies[i][0],
-                'value': anomalies[i][3] + '\n' + anomalies[i][4],
-                'short': false
-            },
-            {
-                'title': 'API ID',
-                'value': anomalies[i][1],
-                'short': true
-            },
-            {
-                'title': 'Host',
-                'value': anomalies[i][5],
-                'short': true
-            },
-            {
-                'title': 'Scored Probability',
-                'value': anomalies[i][8],
-                'short': true
-            }
-        ]
+        anomalyAttachment.fields.push({
+            'title': anomalies[i][0],
+            'value': anomalies[i][3] + '\n' + anomalies[i][4],
+            'short': false
+        });
+        anomalyAttachment.fields.push({
+            'title': 'API ID',
+            'value': anomalies[i][1],
+            'short': true
+        });
+        anomalyAttachment.fields.push({
+            'title': 'Host',
+            'value': anomalies[i][5],
+            'short': true
+        });
+        anomalyAttachment.fields.push({
+            'title': 'Scored Probability',
+            'value': anomalies[i][8],
+            'short': true
+        });
     }
     
-    formatted.attachments = anomalyAttachment;
+    formatted.attachments.push(anomalyAttachment);
     
     return formatted;
 }
