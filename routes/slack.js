@@ -141,8 +141,7 @@ router.post('/cmd', function (req, res) {
                 break;
             default:
                 var message = 'Hi, @' + req.body.user_name + '. Welcome to JurassicHack!';
-                var resBody = { 'text': message };
-                res.send(resBody);
+                res.send(message);
                 break;
         }
     }
