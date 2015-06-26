@@ -4,14 +4,23 @@ var express = require('express');
 var router = express.Router();
 var logger = new log('debug', process.stdout);
 
+var storageAccount = 'blubotlog'
+var storageKey = 'k2i9w+R9BcOi0wOnHBVNWGMuI+MN8rLQzhp3hnpgmysX5qaJfmuur9WJ5/DGNl0rL52yY5k/kMKKv2huJwvdHA==';
+var storageContainer = 'agaveanomalyml';
+var anomalyBatchUrl = 'https://ussouthcentral.services.azureml.net/workspaces/db9e31e5c7dd4f4ea1ce5c16b4425036/services/3b6ba3fb5c88414a95986794752b0746/jobs?api-version=2.0';
+var anomalyUrl = 'https://ussouthcentral.services.azureml.net/workspaces/db9e31e5c7dd4f4ea1ce5c16b4425036/services/3b6ba3fb5c88414a95986794752b0746/execute?api-version=2.0';
+var anomalyMlKey = 'ZeehYZTf4Kxu/1YhDjm4aTjOYGzow9K2Q//6UehrpNqhSUiRQXFNLgurn2L0kgsElCCkYFPUoLuORyTUUJ19GA==';
+var anomalyThreshold = 0.7;
+var Command = { 'Listblob': 'listblob', 'Predict': 'predict', 'Report': 'report' };
+
 router.post('/cmd', function (req, res) {
     logger.debug(req.body);
     if (req.body != null || req.body != "") {
         var slackRequest = req.body.text.trim();
         var cmdTokens = slackRequest.split(' ');
         switch (cmdTokens[0]) {
-            case 'listblob':
-                var blob = azure.createBlobService('blubotlog', 'k2i9w+R9BcOi0wOnHBVNWGMuI+MN8rLQzhp3hnpgmysX5qaJfmuur9WJ5/DGNl0rL52yY5k/kMKKv2huJwvdHA==');
+            case Command.Listblob:
+                var blob = azure.createBlobService(storageAccount, storageKey);
                 blob.listBlobsSegmented(
                     'agaveanomalyml',
                     null,
@@ -33,10 +42,79 @@ router.post('/cmd', function (req, res) {
                     }
                 );
                 break;
-            case 'predict':
-                res.send('Predict new data:');
+            case Command.Predict:
+                if (cmdTokens.length > 2) {
+                    var fileName = cmdTokens[1];
+                    var blob = azure.createBlobService(storageAccount, storageKey);
+                    var blobLines = '';
+                    var values = [];
+                    
+                    blob.getBlobToText(storageContainer, fileName, function (error, result, response) {
+                        blobLines = result.split('\r\n');
+                        blobLines.splice(0, 1);
+                        
+                        for (var i in blobLines) {
+                            var fields = blobLines[i].split('\t');
+                            values.push(fields);
+                        }
+                        
+                        var requestBody = {
+                            "Inputs": {
+                                "NewData": {
+                                    "ColumnNames": [
+                                        "SessionId",
+                                        "ApiId",
+                                        "APIType",
+                                        "AssetId",
+                                        "AppURL",
+                                        "Host",
+                                        "Label"
+                                    ],
+                                    "Values": values
+                                }
+                            },
+                            "GlobalParameters": {}
+                        }
+                        
+                        var headers = {
+                            'content-type': 'application/json',
+                            'authorization': 'Bearer ' + anomalyMlKey,
+                            'accept': 'application/json'
+                        };
+                        
+                        request({
+                            uri: anomalyUrl,
+                            method: 'POST',
+                            timeout: 10000,
+                            followRedirect: true,
+                            maxRedirects: 10,
+                            body: JSON.stringify(requestBody),
+                            headers: headers
+                        }, function (error, response, body) {
+                            if (!error) {
+                                logger.debug(body);
+                                
+                                var result = (JSON.parse(body)).Results;
+                                var resultValues = result.Output.value.Values;
+                                var anomalies = [];
+                                
+                                for (var i in resultValues) {
+                                    if (resultValues[i][8] > anomalyThreshold) {
+                                        anomalies.push(resultValues[i]);
+                                    }
+                                }
+                                
+                                var message = 'Here are some suspecious activities:\r\n' + JSON.stringify(anomalies);
+                                res.send(message);
+                            }
+                        });
+                    });
+                }
+                else {
+                    res.send('Usage: /bluebot predict {blobname}');
+                }
                 break;
-            case 'report':
+            case Command.Report:
                 res.send('Report last run:');
                 break;
             default:
