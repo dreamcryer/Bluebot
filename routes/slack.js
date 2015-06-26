@@ -140,7 +140,7 @@ router.post('/cmd', function (req, res) {
                 res.send('Report last run:');
                 break;
             default:
-                var message = 'Hi, @' + req.body.user_name + ' from ' + '#' + req.body.channel_name + ' on ' + req.body.team_domain;
+                var message = 'Hi, @' + req.body.user_name + '. Welcome to JurassicHack!';
                 var resBody = { 'text': message };
                 res.send(resBody);
                 break;
